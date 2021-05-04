@@ -1,0 +1,101 @@
+{
+	"nice": {
+		"name": "nice",
+		"type": "local",
+		"location": "./audio/nice.mp3",
+		"aliases": ["noice"]
+	},
+	"bruh": {
+		"name": "bruh",
+		"type": "local",
+		"location": "./audio/bruh.mp3"
+	},
+	"fail" : {
+		"name": "fail",
+		"type": "local",
+		"location": "./audio/fail.mp3"
+	},
+	"hello": {
+		"name": "hello",
+		"type": "local",
+		"location": "./audio/hello.mp3",
+		"aliases": ["general kenobi"]
+	},
+	"nani": {
+		"name": "nani",
+		"type": "local",
+		"location": "./audio/nani.mp3",
+		"aliases": ["what", "wot"]
+	},
+	"surprise": {
+		"name": "surprise",
+		"type": "local",
+		"location": "./audio/surprise.mp3"
+	},
+	"victory": {
+		"name": "victory",
+		"type": "local",
+		"location": "./audio/victory.mp3",
+		"aliases": ["win", "dub", "victory royale"]
+	},
+	"wow": {
+		"name": "wow",
+		"type": "local",
+		"location": "./audio/wow.mp3",
+		"aliases": []
+	},
+	"we'll be right back": {
+		"name": "we'll be right back",
+		"type": "local",
+		"location": "./audio/well-be-right-back.mp3",
+		"aliases": ["brb", "be right back"]
+	},
+	"how are you" : {
+		"name": "how are you",
+		"type": "local",
+		"location": "./audio/how-are-you.mp3"
+	},
+	"going home": {
+		"name": "going home",
+		"type": "local",
+		"location": "./audio/going-home.mp3",
+		"aliases": ["home", "going"]
+	},
+	"careless whisper": {
+		"name": "careless whisper",
+		"type": "local",
+		"location": "./audio/careless_whispers.mp3",
+		"aliases": ["careless", "whisper", "sexy sax", "sax"]
+	},
+	"bonk": {
+		"name": "bonk",
+		"type": "local",
+		"location": "./audio/bonk.mp3"
+	},
+	"stop it": {
+		"name": "stop it",
+		"type": "local",
+		"location": "./audio/stop-it.mp3",
+		"aliases": ["get some help", "stop"]
+	},
+	"sheesh": {
+		"name": "sheesh",
+		"type": "local",
+		"location": "./audio/sheesh.mp3"
+	},
+	"why": {
+		"name": "why",
+		"type": "local",
+		"location": "./audio/why.mp3"
+	},
+	"how dare you": {
+		"name": "how dare you",
+		"type": "url",
+		"location": "https://www.myinstants.com/media/sounds/output_wek7BDn.mp3"
+	},
+	"omg": {
+		"name": "omg",
+		"type": "url",
+		"location": "https://www.myinstants.com/media/sounds/meme_lgkJmX6.mp3"
+	}
+}
