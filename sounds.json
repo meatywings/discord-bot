@@ -101,6 +101,7 @@
 	"you're trash": {
 		"name": "you're trash",
 		"type": "local",
-		"location": "./audio/you're-trash.mp3"
+		"location": "./audio/you're-trash.mp3",
+		"aliases": ["trash"]
 	}
 }
