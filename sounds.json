@@ -97,5 +97,10 @@
 		"name": "omg",
 		"type": "url",
 		"location": "https://www.myinstants.com/media/sounds/meme_lgkJmX6.mp3"
+	},
+	"you're trash": {
+		"name": "you're trash",
+		"type": "local",
+		"location": "./audio/you're-trash.mp3"
 	}
 }
