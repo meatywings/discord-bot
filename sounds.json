@@ -102,6 +102,12 @@
 		"name": "you're trash",
 		"type": "local",
 		"location": "./audio/you're-trash.mp3",
-		"aliases": ["trash"]
+		"aliases": ["trash", "youre trash"]
+	},
+	"leroy jenkins!": {
+		"name": "leroy jenkins!",
+		"type": "local",
+		"location": "./audio/leroy.mp3",
+		"aliases": ["rush", "leroy", "leroy jenkins", "jenkins"]
 	}
 }
