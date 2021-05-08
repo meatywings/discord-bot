@@ -109,5 +109,11 @@
 		"type": "local",
 		"location": "./audio/leroy.mp3",
 		"aliases": ["rush", "leroy", "leroy jenkins", "jenkins"]
+	},
+	"oh okay god damn": {
+		"name": "oh okay god damn",
+		"type": "url",
+		"location": "https://www.myinstants.com/media/sounds/xq17dnn0hou7_mr2-online-audio-converter.mp3",
+		"aliases": []
 	}
 }
