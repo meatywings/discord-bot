@@ -3,6 +3,10 @@ const path = require('path');
 const soundSearcher = new StringSearcher();
 const database = require('../../db');
 
+let guilds = {};
+let sounds = {};
+let triggers = {};
+
 
 async function _createUUIDExtension() {
 	try {
@@ -26,8 +30,10 @@ async function _createSoundsTable() {
 				sound_id uuid NOT NULL DEFAULT uuid_generate_v4(),
 				sound_name text COLLATE pg_catalog."default",
 				sound_url text COLLATE pg_catalog."default" NOT NULL,
-				default_trigger_key boolean NOT NULL DEFAULT false,
-				CONSTRAINT sounds_pkey PRIMARY KEY (sound_id)
+				default_sound boolean NOT NULL DEFAULT false,
+				guild_id bigint DEFAULT null,
+				CONSTRAINT sounds_pkey PRIMARY KEY (sound_id),
+				CONSTRAINT fk_guild_id FOREIGN KEY (guild_id) REFERENCES public.guilds(guild_id)
 			)`);
 
 		// Copy in default sound data
@@ -39,7 +45,8 @@ async function _createSoundsTable() {
 			FROM public.sounds
 			WITH NO DATA;
 
-			COPY tmp_table FROM '${fileName}';
+			COPY tmp_table FROM '${fileName}'
+			WITH NULL '';
 
 			INSERT INTO public.sounds
 			SELECT *
@@ -60,7 +67,11 @@ async function _createTriggersTable() {
 				trigger_id uuid NOT NULL DEFAULT uuid_generate_v4(),
 				trigger_key text COLLATE pg_catalog."default" NOT NULL,
 				sound_id uuid,
-				CONSTRAINT triggers_pkey PRIMARY KEY (trigger_id)
+				guild_id bigint,
+				default_trigger boolean DEFAULT false,
+				CONSTRAINT triggers_pkey PRIMARY KEY (trigger_id),
+				CONSTRAINT fk_sound_id FOREIGN KEY(sound_id) REFERENCES public.sounds(sound_id),
+				CONSTRAINT fk_guild_id FOREIGN KEY(guild_id) REFERENCES public.guilds(guild_id)
 			)`);
 		console.log(res);
 
@@ -73,7 +84,8 @@ async function _createTriggersTable() {
 			FROM public.triggers
 			WITH NO DATA;
 
-			COPY tmp_table FROM '${fileName}';
+			COPY tmp_table FROM '${fileName}'
+			WITH NULL '';
 
 			INSERT INTO public.triggers
 			SELECT *
@@ -93,8 +105,6 @@ async function _createGuildsTable() {
 			(
 				guild_id bigint PRIMARY KEY NOT NULL,
 				guild_name text NOT NULL,
-				guild_sounds uuid[],
-				triggers uuid[],
 				command_prefix text NOT NULL DEFAULT '!'
 			)`);
 		console.log(res);
@@ -103,16 +113,51 @@ async function _createGuildsTable() {
 	}
 }
 
+async function loadSounds() {
+	let obj = {};
+	const result = await database.querySync(`
+	SELECT * FROM public.sounds
+	`);
+	for (const sound of result.rows) {
+		obj[sound.sound_id] = sound;
+	}
+	return obj;
+}
+
+async function loadTriggers() {
+	let obj = {};
+	const result = await database.querySync(`
+	SELECT * FROM public.triggers
+	`);
+	for (const trigger of result.rows) {
+		obj[trigger.trigger_id] = trigger;
+	}
+	return obj;
+}
+
+async function loadGuilds() {
+	let obj = {};
+	const result = await database.querySync(`
+	SELECT * FROM public.guilds;
+	`);
+	for (const guild of result.rows) {
+		obj[guild.guild_id] = guild;
+	}
+	return obj;
+}
+
 /**
  * Create the tables in the database
  */
 async function _init() {
-
 	await _createUUIDExtension();
-	_createSoundsTable();
-	_createTriggersTable();
-	_createGuildsTable();
+	await _createGuildsTable();
+	await _createSoundsTable();
+	await _createTriggersTable();
 
+	sounds = await loadSounds();
+	triggers = await loadTriggers();
+	guilds = await loadGuilds();
 }
 
 _init();
@@ -122,9 +167,19 @@ module.exports = {
 	message: (message) => {
 		console.log(message);
 	},
-	addSound: () => {
-		const table = 'public.sounds';
-		console.log(table);
+	async addSound(guild, sound) {
+		const result = await database.querySync(`
+		DO $$
+		DECLARE
+			sid	UUID := uuid_generate_v4();
+		BEGIN
+			INSERT INTO public.sounds(sound_id, sound_name, sound_url)
+			VALUES (sid, '${sound.name}', '${sound.url}' );
+			INSERT INTO public.triggers(sound_id, trigger_key)
+			VALUES (sid, '${sound.trigger}');
+		END $$
+		`);
+		// Update local copy after succesful database save
 	},
 	async addGuild(guild) {
 
@@ -141,6 +196,8 @@ module.exports = {
 	},
 	async guildDelete(guild) {
 		const result = database.querySync(
-			`DELETE FROM public.guilds * WHERE guild_id = ${guild.id}`);
+			`DELETE FROM public.triggers * WHERE guild_id = ${guild.id}
+			DELETE FROM public.sounds * WHERE guild_id = ${guild.id}
+			DELETE FROM public.guilds * WHERE guild_id = ${guild.id}`);
 	},
 };
