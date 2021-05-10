@@ -107,4 +107,4 @@ class StringSearcher {
 	}
 }
 
-module.exports = new StringSearcher();
+module.exports = StringSearcher;
