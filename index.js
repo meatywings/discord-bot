@@ -99,42 +99,6 @@ discord_client.login(process.env.DISCORD_TOKEN);
 // 						FUNCTIONS
 
 /**
- * Plays an audio file.
- * @param {Message} message The message that caused the audio file to be played.
- * @param {string} audio_file path to the audio file
- * @todo I want to make this search the message for a list of words that correlate to
- * audio files. If the user that sent the message is in a voice chat, the bot will join
- * the chat and play the audio file corresponding to the word. Will probably on make it play
- * the first word found because then it would just keep playing a heap of audio clips.
- */
-async function playAudio(message, sound) {
-	const audio_file = sound.location;
-	try {
-		if (sound.type == 'local' && !fs.existsSync(audio_file)) {
-			return;
-		}
-	} catch (error) {
-		console.error(error);
-	}
-
-	const connection = await message.member.voice.channel.join();
-
-	const dispatcher = connection.play(audio_file);
-	dispatcher.on('start', () => {
-		console.log('audio file is now playing!');
-	});
-
-	dispatcher.on('finish', () => {
-		console.log('audio file has finished playing!');
-		console.log('disconnecting');
-		connection.disconnect();
-	});
-
-	// Always remember to handle errors appropriately!
-	dispatcher.on('error', console.error);
-}
-
-/**
  * Processes a command from a message.
  * @param {Message} message message to be processed.
  */
@@ -195,20 +159,6 @@ function processCommand(message) {
 	} catch (error) {
 		console.error(error);
 		message.reply('There was an error executing that command!');
-	}
-	return;
-}
-
-/**
- * Process a message that was received in the chat
- * @param {Message} message A discord Message Object to be processed
- * @todo I want to make this process a list of rules in the 'rules' folder.
- * I don't know how that will work yet though.
- */
-function processMessage(message) {
-	if ((/fuck/gmi).test(message.content)) {
-		const edit = message.content.replace(/fuck/gmi, '\\*\\*\\*\\*');
-		message.reply(`Watch your profanities '${edit}'`).then(message.delete());
 	}
 	return;
 }
