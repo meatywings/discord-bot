@@ -1,4 +1,7 @@
 const StringSearcher = require('../../StringSearcher.js');
+const fs = require('fs');
+const copyFrom = require('pg-copy-streams').from;
+const Readable = require('stream').Readable;
 const path = require('path');
 const soundSearcher = new StringSearcher();
 const database = require('../../db');
@@ -38,21 +41,36 @@ async function _createSoundsTable() {
 			)`);
 
 		// Copy in default sound data
-		res = await database.querySync(`
-			CREATE TEMP TABLE tmp_table
-			ON COMMIT DROP
-			AS
-			SELECT *
-			FROM public.sounds
-			WITH NO DATA;
+		const client = await database.getClientSync();
+		const stream = client.query(copyFrom(`COPY public.sounds FROM STDIN WITH NULL ''`));
+		const fileStream = fs.createReadStream(fileName);
+		fileStream.on('error', (error) =>{
+			console.log(`Error in reading file: ${error}`);
+		});
+		stream.on('error', (error) => {
+			console.log(`Error in copy command: ${error}`);
+		});
+		stream.on('end', () => {
+			console.log(`Completed loading data into public.sounds`);
+			client.end();
+		});
+		fileStream.pipe(stream);
 
-			COPY tmp_table FROM '${fileName}'
-			WITH NULL '';
+		// res = await database.querySync(`
+		// 	CREATE TEMP TABLE tmp_table
+		// 	ON COMMIT DROP
+		// 	AS
+		// 	SELECT *
+		// 	FROM public.sounds
+		// 	WITH NO DATA;
 
-			INSERT INTO public.sounds
-			SELECT *
-			FROM tmp_table
-			ON CONFLICT DO NOTHING`);
+		// 	COPY tmp_table FROM '${fileName}'
+		// 	WITH NULL '';
+
+		// 	INSERT INTO public.sounds
+		// 	SELECT *
+		// 	FROM tmp_table
+		// 	ON CONFLICT DO NOTHING`);
 	} catch (error) {
 		console.log(error.stack);
 	}
@@ -76,22 +94,37 @@ async function _createTriggersTable() {
 			)`);
 		console.log(res);
 
-		// Copy in default triggers data
-		res = await database.querySync(`
-			CREATE TEMP TABLE tmp_table
-			ON COMMIT DROP
-			AS
-			SELECT *
-			FROM public.triggers
-			WITH NO DATA;
+		// // Copy in default triggers data
+		// Copy in default sound data
+		const client = await database.getClientSync();
+		const stream = client.query(copyFrom(`COPY public.triggers FROM STDIN WITH NULL ''`));
+		const fileStream = fs.createReadStream(fileName);
+		fileStream.on('error', (error) =>{
+			console.log(`Error in reading file: ${error}`);
+		});
+		stream.on('error', (error) => {
+			console.log(`Error in copy command: ${error}`);
+		});
+		stream.on('end', () => {
+			console.log(`Completed loading data into public.triggers`);
+			client.end();
+		});
+		fileStream.pipe(stream);
+		// res = await database.querySync(`
+		// 	CREATE TEMP TABLE tmp_table
+		// 	ON COMMIT DROP
+		// 	AS
+		// 	SELECT *
+		// 	FROM public.triggers
+		// 	WITH NO DATA;
 
-			COPY tmp_table FROM '${fileName}'
-			WITH NULL '';
+		// 	COPY tmp_table FROM '${fileName}'
+		// 	WITH NULL '';
 
-			INSERT INTO public.triggers
-			SELECT *
-			FROM tmp_table
-			ON CONFLICT DO NOTHING`);
+		// 	INSERT INTO public.triggers
+		// 	SELECT *
+		// 	FROM tmp_table
+		// 	ON CONFLICT DO NOTHING`);
 		console.log(res);
 	} catch (error) {
 		console.log(error.stack);
