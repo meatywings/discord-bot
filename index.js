@@ -1,88 +1,92 @@
 const fs = require('fs');
 
-const https = require('https');
+class RuleManager {
+	constructor() {
+		this.rules = [];
+	}
+}
 
-const dotenv = require('dotenv');
-dotenv.config();
+const ruleManager = new RuleManager();
+ruleManager.rules.push(require('./rules/sounds/sounds'));
 
+// Discord ////////////////////////////////////////////////////////////////////
 const Discord = require('discord.js');
-const client = new Discord.Client();
+const discord_client = new Discord.Client();
 
-/**
- * Load commands from commands folder
- */
-client.commands = new Discord.Collection();
+discord_client.commands = new Discord.Collection();
 const commandFolders = fs.readdirSync('./commands');
 for (const folder of commandFolders) {
 	const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
 	for (const file of commandFiles) {
 		const command = require(`./commands/${folder}/${file}`);
-		client.commands.set(command.name, command);
+		discord_client.commands.set(command.name, command);
 	}
 }
 
-const sounds = require('./sounds.json');
-// Map aliases to the equivalent sound
-Object.keys(sounds).forEach(key => {
-	const sound = sounds[key];
-	if (Array.isArray(sound.aliases)) {
-		sound.aliases.forEach(alias => sounds[alias] = sound);
+discord_client.rules = new Discord.Collection();
+const rulesFolders = fs.readdirSync('./rules');
+for (const folder of rulesFolders) {
+	const rulesFiles = fs.readdirSync(`./rules/${folder}`).filter(file => file.endsWith('.js'));
+	for (const file of rulesFiles) {
+		const rule = require(`./rules/${folder}/${file}`);
+		discord_client.rules.set(rule.name, rule);
 	}
-});
+}
 
-// Create StringSearcher and load the sounds into it
-const StringSearcher = require('./StringSearcher.js');
-StringSearcher.load(Object.keys(sounds));
-
-/**
- * Cooldowns - stop people spamming shit
- */
-client.cooldowns = new Discord.Collection();
-client.defaultCooldown = 0;
-
+discord_client.cooldowns = new Discord.Collection();
+discord_client.defaultCooldown = 0;
 
 /**
  * Read in config.json file
  */
-const { prefix } = require('./config.json');
+const { prefix } = '!';
 
 /**
  * Client is ready for processing
  */
-client.once('ready', () => {
-	console.log('Ready!');
+discord_client.once('ready', () => {
+	console.log('Discord Client Ready!');
 });
 
+discord_client.on('guildUpdate', (oldGuild, newGuild) => {
+	console.log(oldGuild, newGuild);
+	for (const rule of ruleManager.rules) {
+		if (rule.updateGuild) rule.updateGuild(oldGuild, newGuild);
+	}
+});
+
+discord_client.on('guildCreate', (guild) => {
+	for (const rule of ruleManager.rules) {
+		rule.addGuild(guild);
+	}
+});
 /**
  * Process message.
  */
-client.on('message', message => {
+discord_client.on('message', message => {
 	// Check not that the message is not this bot
-	if (message.author.id == client.user.id) {
+	if (message.author.id == discord_client.user.id) {
 		return;
 	}
 
-	if (message.member.voice.channel) {
-		const matches = StringSearcher.search(message.content);
-		if (matches.length > 0) {
-			playAudio(message, sounds[matches[0].toLowerCase()]);
-		}
+	for (const rule of ruleManager.rules) {
+		rule.message(message);
 	}
 
-	// Get the arguments of the message
-	const args = message.content.slice(prefix.length).trim().split(/ +/);
+	// // Get the arguments of the message
+	// const args = message.content.slice(prefix.length).trim().split(/ +/);
 
-	if (args.length === 0) processMessage(message);
+	// if (args.length === 0) processMessage(message);
 
-	// Get the command (first argument)
-	const cmd_string = args.shift().toLowerCase();
+	// // Get the command (first argument)
+	// const cmd_string = args.shift().toLowerCase();
 
-	// Check if command or message
-	if (message.content.startsWith(prefix) && client.commands.has(cmd_string)) {
-		processCommand(message);
-	} else {
-		processMessage(message);
-	}
+	// // Check if command or message
+	// if (message.content.startsWith(prefix) && discord_client.commands.has(cmd_string)) {
+	// 	processCommand(message);
+	// } else {
+	// 	processMessage(message);
+	// }
 
 
 });
@@ -90,7 +94,7 @@ client.on('message', message => {
 /**
  * Log bot in
  */
-client.login(process.env.DISCORD_TOKEN);
+discord_client.login(process.env.DISCORD_TOKEN);
 
 // 						FUNCTIONS
 
@@ -140,7 +144,7 @@ function processCommand(message) {
 	// Get the command (first argument)
 	const cmd_string = args.shift().toLowerCase();
 
-	const command = client.commands.get(cmd_string);
+	const command = discord_client.commands.get(cmd_string);
 
 	// Check if that command is guild only and we are not in DMs
 	if (command.guildOnly && message.channel.type === 'dm') {
@@ -155,9 +159,9 @@ function processCommand(message) {
 	}
 
 	// Get the cooldowns collection from client
-	const { cooldowns } = client;
+	const { cooldowns } = discord_client;
 	// Get the default cooldown
-	const { defaultCooldown } = client;
+	const { defaultCooldown } = discord_client;
 
 	// Check if the cooldowns collection has an instance of the command
 	// otherwise, set it with the command name as the key and a discord as the collection
@@ -187,9 +191,6 @@ function processCommand(message) {
 
 	// Try to execute command.
 	try {
-		if (command.name == 'list' && args[0].trim().toLowerCase() === 'sounds') {
-			args.splice(1, 0, StringSearcher.strings);
-		}
 		command.execute(message, args);
 	} catch (error) {
 		console.error(error);
